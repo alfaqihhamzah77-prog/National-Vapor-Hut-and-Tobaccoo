@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>نظام النقاط - الموظف</title>
+  <style>
+    body { font-family: 'Tahoma', sans-serif; background-color: #f0f2f5; }
+    .container { max-width: 800px; margin: 30px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+    .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+    input, button, select { padding: 10px; margin: 8px 0; width: 100%; box-sizing: border-box; }
+    button { background-color: #4285F4; color: white; border: none; cursor: pointer; }
+    button.danger { background-color: #EA4335; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; text-align: center; border: 1px solid #ddd; }
+    th { background-color: #f2f2f2; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 style="text-align: center; color: #333;">لوحة تحكم الموظف</h1>
+    
+    <div class="section">
+      <h2>البحث عن عميل</h2>
+      <input type="text" id="searchId" placeholder="رقم العميل">
+      <button onclick="searchCustomer()">بحث</button>
+      <div id="searchResult"></div>
+    </div>
+    
+    <div class="section">
+      <h2>تعديل النقاط</h2>
+      <input type="number" id="pointsInput" placeholder="القيمة الجديدة">
+      <button onclick="updatePoints()">تحديث النقاط</button>
+      <button class="danger" onclick="resetForm()">إلغاء</button>
+    </div>
+    
+    <div class="section">
+      <h2>إضافة عميل جديد</h2>
+      <input type="text" id="newCustomerId" placeholder="رقم العميل">
+      <input type="text" id="newCustomerName" placeholder="اسم العميل">
+      <input type="number" id="initialPoints" placeholder="النقاط الأولية" value="0">
+      <button onclick="addCustomer()">إضافة عميل</button>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbz9sU7b6N2tJ97XF0Menvgm88w33FcOtRinIrs46d7pnG_aclp_RwGmOrE2ZmSaQbIudw/exec";
+    let currentCustomer = null;
+    
+    // تأمين الدخول بكلمة مرور
+    const EMPLOYEE_PASSWORD = "123456"; // غيّر هذه الكلمة
+    const enteredPassword = prompt("كلمة مرور الموظف:");
+    if (enteredPassword !== EMPLOYEE_PASSWORD) {
+      alert("كلمة المرور غير صحيحة!");
+      window.location.href = "customer.html";
+    }
+    
+    function searchCustomer() {
+      const customerId = document.getElementById("searchId").value;
+      if (!customerId) return alert("الرجاء إدخال رقم العميل");
+      
+      document.getElementById("searchResult").innerHTML = "جاري البحث...";
+      
+      fetch(`${API_URL}?action=getCustomer&customerId=${customerId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            document.getElementById("searchResult").innerHTML = "العميل غير موجود";
+            currentCustomer = null;
+          } else {
+            currentCustomer = { id: data[0], name: data[1], points: data[2] };
+            document.getElementById("searchResult").innerHTML = `
+              <table>
+                <tr><th>رقم العميل</th><th>الاسم</th><th>النقاط الحالية</th></tr>
+                <tr>
+                  <td>${data[0]}</td>
+                  <td>${data[1]}</td>
+                  <td>${data[2]}</td>
+                </tr>
+              </table>
+            `;
+          }
+        });
+    }
+    
+    function updatePoints() {
+      if (!currentCustomer) return alert("الرجاء البحث عن عميل أولاً");
+      
+      const newPoints = document.getElementById("pointsInput").value;
+      if (!newPoints) return alert("الرجاء إدخال قيمة النقاط");
+      
+      fetch(`${API_URL}?action=updatePoints&customerId=${currentCustomer.id}&points=${newPoints}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert("تم تحديث النقاط بنجاح");
+            searchCustomer(); // تحديث البيانات المعروضة
+          } else {
+            alert("حدث خطأ أثناء التحديث");
+          }
+        });
+    }
+    
+    function addCustomer() {
+      const customerId = document.getElementById("newCustomerId").value;
+      const name = document.getElementById("newCustomerName").value;
+      const points = document.getElementById("initialPoints").value || 0;
+      
+      if (!customerId || !name) return alert("الرجاء إدخال جميع البيانات");
+      
+      fetch(`${API_URL}?action=addCustomer&customerId=${customerId}&name=${name}&points=${points}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert("تمت إضافة العميل بنجاح");
+            document.getElementById("newCustomerId").value = "";
+            document.getElementById("newCustomerName").value = "";
+          } else {
+            alert("حدث خطأ أثناء الإضافة");
+          }
+        });
+    }
+    
+    function resetForm() {
+      currentCustomer = null;
+      document.getElementById("searchId").value = "";
+      document.getElementById("pointsInput").value = "";
+      document.getElementById("searchResult").innerHTML = "";
+    }
+  </script>
+</body>
+</html>
