@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>نظام النقاط - الزبون</title>
+  <style>
+    body { font-family: 'Tahoma', sans-serif; background-color: #f5f5f5; }
+    .container { max-width: 500px; margin: 50px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    input, button { padding: 12px; margin: 10px 0; width: 100%; box-sizing: border-box; }
+    button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+    #result { margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 style="text-align: center; color: #333;">الاستعلام عن النقاط</h1>
+    <input type="text" id="customerId" placeholder="أدخل رقم العميل" required>
+    <button onclick="getPoints()">استعلام</button>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbz9sU7b6N2tJ97XF0Menvgm88w33FcOtRinIrs46d7pnG_aclp_RwGmOrE2ZmSaQbIudw/exec";
+    
+    function getPoints() {
+      const customerId = document.getElementById("customerId").value;
+      if (!customerId) return alert("الرجاء إدخال رقم العميل");
+      
+      document.getElementById("result").innerHTML = "جاري البحث...";
+      
+      fetch(`${API_URL}?action=getCustomer&customerId=${customerId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            document.getElementById("result").innerHTML = "❌ العميل غير مسجل";
+          } else {
+            document.getElementById("result").innerHTML = `
+              <h3>العميل: ${data[1]}</h3>
+              <p style="font-size: 24px; color: #4CAF50;">النقاط: ${data[2]}</p>
+            `;
+          }
+        })
+        .catch(() => document.getElementById("result").innerHTML = "حدث خطأ في الاتصال");
+    }
+  </script>
+</body>
+</html>
